@@ -1,0 +1,56 @@
+PROJECT 2
+
+headers are first line in csv format (comma delimited) of categorical data
+each column is data for a particular attribute
+can save as any file extension
+naive bayesian: lookup table to find conditional probabilities
+pandas for sql-style lookup:
+pandas.read_csv
+don't need quotes->everything is text
+csv also can be led format
+last column is label (decision attribute)
+lists of features of file are columns (unique)
+categorical has discrete values
+
+#Dataframe
+wd=pd.read_csv
+#can use Series to assign any value to integer indices
+#each column in dataframe is a series
+#each table is a dictionary of series(columns), where keys are attribute names
+#dictionary of conditional probability products
+
+cat_file_path='./weather.csv'
+num_file_path='./weather_numeric.csv'
+cat_data=pd.read_csv(cat_file_path)
+#retreive a column with string index
+
+#eg split: first 100 for training, last 20 for testing (of table)
+
+
+distribution of decision labels: wd[wd.columns[-1]]
+use frequency of values of distribution
+
+useful functions in pandas:
+unique()
+-gives list of all unique values (to find domain of column)
+wd[wd.columns[k]].unique() gives domain of kth attribute
+name:
+[wd[wd.columns[i]].unique() for i in wd.columns]
+value_counts()
+astype(str)
+codes
+categories
+isin(?)
+loc
+f_list=[[wd[i].value_counts()[j] for j in wd[i].unique()] for i in wd.columns]
+
+convert to category: wd[attribute_str].astype('category')
+
+pandas multi index?
+
+#try googling python pandas conditional probabilities
+conditional probabilities
+{i:mdt[i].unique() for i in mdt.columns}
+{i:set(mdt[i]) for i in mdt.columns}
+get all unique combinations of lhs of table (lhs is all attributes excluding decision attr)
+groupby

@@ -1,0 +1,2 @@
+outlook, temp, humidity, windy, play
+(sunny, overcast, rainy), (cool, mild, hot), (normal, high), (True,False), (yes,no)
