@@ -22,7 +22,7 @@ def SaveModel():
 """        
 class NaiveBayes:
     def __init__(self, file_path=None):
-        self.guid = uuid.uuid4()
+        # self.guid = uuid.uuid4()
         self.file_path = file_path
         self.DFrame = pd.read_csv(file_path)
         if any(pd.isna(self.DFrame[self.DFrame.columns[-1]])):
@@ -30,11 +30,26 @@ class NaiveBayes:
         self.dec_attr = self.DFrame.columns[-1]
         self.cond_attrs = self.DFrame.columns[:-1]
         self.prior = self.freq(self.DFrame[self.dec_attr], 'dict')
+        print(type(self.prior))
+        for i in self.prior:
+            print(type(i), type(self.prior[i]))
         self.c_list = self.inverse_prob(self.DFrame, self.cond_attrs, self.dec_attr)
+        print(type(self.c_list))
         self.tup = (self.prior, self.c_list, self.cond_attrs, self.dec_attr)
-        self.TestData = None
+        #self.TestData = None
 
+    class UUIDEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, uuid.UUID):
+                # if the obj is uuid, we simply return the value of uuid
+                #return obj.hex
+                return obj.int
+            return json.JSONEncoder.default(self, obj)
 
+    def to_dict(self):
+        #return { 'guid': self.guid, 'file_path': self.file_path, 'DFrame': None, 'dec_attr': self.dec_attr, 'cond_attrs': self.cond_attrs, 'prior': self.prior, 'c_list': self.c_list, 'tup': self.tup, 'TestData': self.TestData }
+        pr, c, cond, dec = self.tup
+        return { 'file_path': self.file_path, 'DFrame': self.DFrame.to_json(), 'dec_attr': self.dec_attr, 'cond_attrs': self.cond_attrs.tolist(), 'prior': self.prior, 'c_list': self.c_list, 'tup': (pr, c, cond.tolist(), dec) }
     def DropHeaders(self, df):
         df.pop(0)
         return df
@@ -46,7 +61,7 @@ class NaiveBayes:
         """
         if opt != 'DataFrame':
             if opt == 'dict':
-                return { i: x.value_counts()[i] for i in x.unique()}
+                return { i: int(x.value_counts()[i]) for i in x.unique()}
             else:
                 return (x.name, { i: x.value_counts()[i] for i in x.unique()})
         return pd.DataFrame([x.value_counts()[i] for i in x.unique()], index=x.unique(), columns=[x.name])
@@ -63,8 +78,9 @@ class NaiveBayes:
         return [self.cond_prob(frame, dec_attr, i) for i in cond_attrs]
 
     def SaveModel(self, s):
-        if not Path(s).exists():
-            return None
+        #if not Path(s).exists():
+        #    print('path does not exist')
+        #    return None
         f_str = ''
         j = 0
         pathdir=os.path.dirname(os.path.abspath(__file__))
@@ -83,17 +99,22 @@ class NaiveBayes:
                 f = open(os.path.join(pathdir, s+'.bin'), 'wb')
             else:
                 f = open(os.path.join(pathdir, s), 'wb')
-            f.write(str(self.__dict__).encode('utf-8'))
+            #f.write(str(self.__dict__).encode('utf-8'))
+            #f.write(json.dumps(self.to_dict().encode('utf-8'), cls=self.UUIDEncoder))
+            f.write(json.dumps(self.to_dict()).encode('utf-8'))
             f.close()
         else:
             f = open(os.path.join(pathdir, s), 'w')
-            f.write(str(self.__dict__))
+            #f.write(str(self.__dict__))
+            #f.write(json.dumps(self.to_dict(), cls=self.UUIDEncoder))
+            #print(json.dumps(self.to_dict()))
+            f.write(json.dumps(self.to_dict()))
             f.close()
     
     @classmethod
     def LoadModel(cls, s):
-        if not Path(s).exists():
-            return None
+        #if not Path(s).exists():
+        #    return None
         f_str = ''
         j = 0
         pathdir=os.path.dirname(os.path.abspath(__file__))
@@ -105,17 +126,20 @@ class NaiveBayes:
                 break
         for i in range(j, len(s)):
             f_str += s[i]
-        if f_str == 'bin':
+        print(f_str)
+        print(os.path.join(pathdir, s))
+        if 'bin' in f_str:
             f = open(os.path.join(pathdir, s), 'rb')
             jdict = json.loads(f.read().decode('utf-8').replace('\'', '\"'))
             f.close()
-        else:
+        elif 'json' in f_str:
             f = open(os.path.join(pathdir, s), 'r')
             jdict = json.loads(f.read().replace('\'', '\"'))
             f.close()
         if jdict is not None:
             return cls(**jdict)
         else:
+            print('object could not be created from file')
             return None
 
     def Print(self):
@@ -227,6 +251,13 @@ class Program:
             if Path(s).exists():
                 self.model.SaveModel(s)
                 break
+            elif not Path(s).exists():
+                #use relative path
+                pathdir=os.path.dirname(os.path.abspath(__file__))
+                fname = os.path.join(pathdir, s)
+                print(fname)
+                self.model.SaveModel(fname)
+                break
             else:
                 print('directory does not exist')
     
@@ -238,15 +269,17 @@ class Program:
         while True:
             s = input('please enter the file name to load the model: ')
             if Path(s).exists():
-                self.model = self.model.LoadModel(s)
+                self.model = NaiveBayes.LoadModel(s)
+                break
+            elif not Path(s).exists():
+                #use relative path
+                pathdir=os.path.dirname(os.path.abspath(__file__))
+                fname = os.path.join(pathdir, s)
+                print(fname)
+                self.model = NaiveBayes.LoadModel(fname)
                 break
             else:
                 print('file does not exist')
-        while True:
-            s = input('please enter the file name to test the model with: ')
-            if Path(s).exists():
-                break
-            print('file could not be found')
         yn = input('does the table contain headers? (y/n): ')
         self.TestData = self.LoadCSVFile(s)
         if yn == 'y' or yn == 'Y':

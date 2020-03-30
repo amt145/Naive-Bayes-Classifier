@@ -6,6 +6,7 @@ class Person:
         self.last = last
         self.number = number
         self.address = address
+        self.something = None
 
     def to_dict(self):
         return self.__dict__
@@ -45,9 +46,9 @@ class Person:
         if f_str == 'bin':
         """
         f = open(s, 'r')
-        raw_data = f.read()
+        #jdict = json.loads(json.loads(raw_data.decode('utf-8'), encoding='utf-8'))
+        jdict = json.loads(f.read().replace('\'', '\"'))
         f.close()
-        jdict = json.loads(json.loads(raw_data.decode('utf-8'), encoding='utf-8'))
         return cls(**jdict)
 
 person = Person('Alex', 'T', 1, 111)
@@ -62,13 +63,27 @@ f_b = open(os.path.join(pathstr,'me.bin'), 'rb')
 d = json.loads(f_b.read().decode('utf-8').replace('\'', '\"'))
 f_b.close()
 print(d)
-
+"""
 person2 = Person('Alex', 'T', 1, 111)
 f2 = open(os.path.join(pathstr,'me.txt'), 'w')
-f2.write(str(person.__dict__))
+f2.write(str(person2.__dict__))
 f2.close()
 
 f22 = open(os.path.join(pathstr,'me.txt'), 'r')
 p22 = json.loads(f22.read().replace('\'', '\"'))
 f22.close()
 # print(p22)
+"""
+enable = True
+if enable:
+    person2 = Person('Alex', 'T', 1, 111)
+    f2 = open(os.path.join(pathstr,'me.txt'), 'w')
+    f2.write(str(person2.__dict__))
+    f2.close()
+
+f22 = open(os.path.join(pathstr,'me.txt'), 'r')
+#p22 = json.loads(f22.read().replace('\'', '\"'))
+p22 = Person.LoadModel('me.txt')
+f22.close()
+
+print(str(p22.to_dict()))
