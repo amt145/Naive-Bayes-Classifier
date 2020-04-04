@@ -707,6 +707,8 @@ class Program:
 
 
 # Driver instantiation and main loop invocation
-if __name__ == "__main__":
-    program = Program()
-    program.Run()
+def py_nb():
+    if __name__ == "__main__":
+        program = Program()
+        program.Run()
+py_nb()
